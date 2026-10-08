@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Science Memory Box</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark;--bg:#0a111c;--panel:#111b2b;--line:#2a3a52;--txt:#e8eef7;--mut:#8fa2bd;--acc:#7cc4ff;--ok:#3ecf8e;--bad:#ff6b6b;--warn:#ffc857}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(ellipse at 50% 30%,#14233a,var(--bg) 70%);color:var(--txt);font-family:"Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 20px}
+h1{font:600 clamp(24px,4vw,40px) Georgia,"Times New Roman",serif;margin:0}
+.sub{color:var(--mut);font-size:13px;margin-top:2px}
+.timer{border:1px solid var(--line);border-radius:14px;padding:8px 22px;text-align:center;min-width:200px;background:#0d1626}
+.timer small{display:block;color:var(--mut)}
+.timer b{font-size:34px;font-variant-numeric:tabular-nums}
+.bar{height:5px;background:#2a3446;border-radius:3px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;width:100%;background:var(--acc)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;color:var(--txt);background:#16253b;border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.go{background:var(--acc);color:#07131f;font-weight:600;border-color:var(--acc)}
+button:disabled{opacity:.4;cursor:default}
+#stage{flex:1;position:relative;perspective:1500px;touch-action:none;cursor:grab;min-height:0}
+#stage:active{cursor:grabbing}
+#scene{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
+.f{position:absolute;border:2px solid rgba(190,225,255,.45);background:rgba(160,200,240,.06)}
+#floor{width:640px;height:360px;left:-320px;top:-180px;transform:translateY(150px) rotateX(90deg);background:linear-gradient(135deg,#3b4452,#1f2733);background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:128px 120px}
+#back{width:640px;height:300px;left:-320px;top:-150px;transform:translateZ(-180px)}
+#left{width:360px;height:300px;left:-180px;top:-150px;transform:translateX(-320px) rotateY(90deg)}
+#right{width:360px;height:300px;left:-180px;top:-150px;transform:translateX(320px) rotateY(90deg)}
+#front{width:640px;height:300px;left:-320px;top:-150px;transform:translateZ(180px);background:rgba(160,200,240,.04);pointer-events:none}
+#top{width:640px;height:360px;left:-320px;top:-180px;transform:translateY(-150px) rotateX(90deg);background:rgba(160,200,240,.03)}
+.it{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;transition:opacity .5s}
+.bb{position:absolute;left:-48px;bottom:0;width:96px;text-align:center;transform-origin:50% 100%;pointer-events:none}
+.bb span{display:block;font-size:72px;line-height:1;filter:drop-shadow(0 8px 6px rgba(0,0,0,.55))}
+.bb em{display:none;font-style:normal;font-size:12px;background:rgba(0,0,0,.7);padding:2px 6px;border-radius:6px;white-space:nowrap;position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:2px}
+.labels .bb em{display:block}
+.hide .it{opacity:0}
+.hint{display:flex;gap:22px;justify-content:center;color:var(--mut);font-size:13px;padding:8px 10px 14px;flex-wrap:wrap}
+#test{display:none;position:absolute;left:0;right:0;bottom:0;background:rgba(10,17,28,.94);border-top:1px solid var(--line);padding:14px 16px;max-height:62%;overflow:auto}
+#test h2{margin:0 0 4px;font-size:18px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:10px 0}
+.c{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;font-size:12px}
+.c span{display:block;font-size:34px}
+.c.sel{border-color:var(--acc);background:#18304d}
+.c.ok{border-color:var(--ok);background:#12382a}
+.c.bad{border-color:var(--bad);background:#3d1a1f}
+.c.miss{border-color:var(--warn);background:#3a3014}
+.row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+#res{font-size:18px;font-weight:600}
+@media (max-width:640px){.timer{order:3;width:100%}}
+</style></head>
+<body>
+<header>
+<div><h1>Science Memory Box</h1><div class="sub" id="sub">Look carefully at the objects inside the box. Try to remember them!</div></div>
+<div class="timer"><small>Study Time</small><b id="tm">00:25</b><div class="bar"><i id="pb"></i></div></div>
+<div class="btns">
+<button id="bl">👁 Show Labels</button><button id="bs">⤮ Shuffle Positions</button><button id="br">⟳ Reset</button><button id="bt" class="go">▶ Start Test</button>
+</div>
+</header>
+<div id="stage"><div id="scene">
+<div class="f" id="floor"></div><div class="f" id="back"></div><div class="f" id="left"></div><div class="f" id="right"></div><div class="f" id="top"></div>
+<div id="items" style="transform-style:preserve-3d"></div>
+<div class="f" id="front"></div>
+</div>
+<div id="test">
+<div class="row"><h2 id="th">Which 15 items were in the box?</h2><span id="cnt">0 / 15 selected</span></div>
+<div id="grid"></div>
+<div class="row"><span id="res"></span><button id="sb" class="go">Submit Answers</button></div>
+</div></div>
+<div class="hint"><span>🖱 Drag to rotate</span><span>🔍 Scroll to zoom</span></div>
+<script>
+const ITEMS=[["🧪","Test Tube"],["🩺","Stethoscope"],["🪴","Plant"],["⚽","Ball"],["🌍","Earth (Globe)"],["📷","Camera"],["💻","Laptop"],["📱","Old Cellphone"],["🔬","Microscope"],["🧲","Magnet"],["💡","Light Bulb"],["⚗️","Flask"],["🧬","DNA Model"],["🚀","Rocket"],["🌡️","Thermometer"]];
+const DECOYS=[["🔭","Telescope"],["🧫","Petri Dish"],["🔋","Battery"],["⏰","Alarm Clock"],["🧮","Abacus"],["🔑","Key"],["📚","Books"],["🎈","Balloon"],["⚙️","Gear"],["🧱","Brick"],["📡","Satellite Dish"],["🧭","Compass"],["🔦","Flashlight"],["🛰️","Satellite"],["🪐","Planet"]];
+const POOL=ITEMS.concat(DECOYS);let cur=ITEMS,rest=DECOYS;
+const STUDY=25;
+const $=id=>document.getElementById(id);
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let rx=8,ry=0,zoom=1,fit=1,phase='study',end=0,timer=null,sel=new Set();
+const els=[];
+function layout(){
+  const slots=[],ys=[-62,28,118];
+  for(let r=0;r<3;r++)for(let c=0;c<5;c++)slots.push([-256+c*128+(Math.random()-.5)*24,ys[r]+(Math.random()-.5)*10,(Math.random()-.5)*90]);
+  const order=shuf(slots);
+  els.forEach((e,i)=>{e.dataset.x=order[i][0];e.dataset.y=order[i][1];e.dataset.z=order[i][2]});
+  apply();
+}
+function build(){
+  const box=$('items');
+  ITEMS.forEach(([em,n])=>{
+    const d=document.createElement('div');d.className='it';
+    d.innerHTML=`<div class="bb"><span>${em}</span><em>${n}</em></div>`;
+    box.appendChild(d);els.push(d);
+  });
+}
+function apply(){
+  $('scene').style.transform=`scale(${fit*zoom}) rotateX(${rx}deg) rotateY(${ry}deg)`;
+  els.forEach(e=>{
+    e.style.transform=`translate3d(${e.dataset.x}px,${e.dataset.y}px,${e.dataset.z}px)`;
+    e.firstChild.style.transform=`rotateY(${-ry}deg) rotateX(${-rx}deg)`;
+  });
+}
+function resize(){const s=$('stage');fit=Math.min(s.clientWidth/820,s.clientHeight/520);apply()}
+function draw(){
+  const left=Math.max(0,end-Date.now());
+  const s=Math.ceil(left/1000);
+  $('tm').textContent='00:'+String(s).padStart(2,'0');
+  $('pb').style.width=(left/(STUDY*1000)*100)+'%';
+  if(left<=0)startTest();
+}
+function idle(){
+  clearInterval(timer);phase='idle';sel.clear();
+  $('stage').classList.add('hide');$('test').style.display='none';
+  ['bl','bs','bt'].forEach(i=>$(i).disabled=false);
+  $('sub').textContent='The box is empty. Press Start Test to reveal the objects and start the timer!';
+  document.querySelector('.timer small').textContent='Study Time';
+  $('tm').textContent='00:25';$('pb').style.width='100%';
+  const p=shuf(POOL);cur=p.slice(0,15);rest=p.slice(15);
+  els.forEach((e,i)=>{e.querySelector('span').textContent=cur[i][0];e.querySelector('em').textContent=cur[i][1]});
+  layout();
+}
+function begin(){
+  if(phase!=='idle')return;
+  phase='study';$('stage').classList.remove('hide');$('bt').disabled=true;
+  $('sub').textContent='Look carefully at the objects inside the box. Try to remember them!';
+  end=Date.now()+STUDY*1000;draw();timer=setInterval(draw,100);
+}
+function startTest(){
+  if(phase!=='study')return;
+  clearInterval(timer);phase='test';
+  $('stage').classList.add('hide');
+  ['bl','bs','bt'].forEach(i=>$(i).disabled=true);
+  $('tm').textContent='00:00';$('pb').style.width='0%';
+  document.querySelector('.timer small').textContent='Test Time';
+  $('sub').textContent='The box is empty now. Pick the items you saw!';
+  $('th').textContent='Which 15 items were in the box?';$('res').textContent='';
+  $('sb').textContent='Submit Answers';$('sb').disabled=false;
+  const g=$('grid');g.innerHTML='';
+  shuf(cur.concat(rest)).forEach(([em,n])=>{
+    const c=document.createElement('div');c.className='c';c.dataset.n=n;
+    c.innerHTML=`<span>${em}</span>${n}`;
+    c.onclick=()=>{if(phase!=='test')return;sel.has(n)?sel.delete(n):sel.add(n);c.classList.toggle('sel');$('cnt').textContent=sel.size+' / 15 selected'};
+    g.appendChild(c);
+  });
+  $('cnt').textContent='0 / 15 selected';$('test').style.display='block';
+}
+function submit(){
+  if(phase==='done'){idle();return}
+  phase='done';
+  const real=new Set(cur.map(x=>x[1]));let hit=0,wrong=0;
+  document.querySelectorAll('.c').forEach(c=>{
+    const n=c.dataset.n,s=sel.has(n),r=real.has(n);
+    c.classList.remove('sel');
+    if(s&&r){c.classList.add('ok');hit++}else if(s&&!r){c.classList.add('bad');wrong++}else if(!s&&r)c.classList.add('miss');
+  });
+  const score=Math.max(0,hit-wrong);
+  $('res').textContent=`Score ${score}/15 · ${hit} correct, ${wrong} wrong, ${15-hit} missed`;
+  $('th').textContent='Results';$('sb').textContent='Play Again';
+}
+$('bl').onclick=()=>{const on=$('stage').classList.toggle('labels');$('bl').textContent=(on?'🙈 Hide':'👁 Show')+' Labels'};
+$('bs').onclick=layout;$('br').onclick=idle;$('bt').onclick=begin;$('sb').onclick=submit;
+let drag=null;
+const st=$('stage');
+st.addEventListener('pointerdown',e=>{if(e.target.closest('#test'))return;drag=[e.clientX,e.clientY];st.setPointerCapture(e.pointerId)});
+st.addEventListener('pointermove',e=>{if(!drag)return;ry+=(e.clientX-drag[0])*.4;rx=Math.max(-10,Math.min(80,rx-(e.clientY-drag[1])*.3));drag=[e.clientX,e.clientY];apply()});
+st.addEventListener('pointerup',()=>drag=null);
+st.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.5,Math.min(1.8,zoom*(e.deltaY<0?1.08:.92)));apply()},{passive:false});
+addEventListener('resize',resize);
+build();resize();idle();
+</script>
+</body></html>

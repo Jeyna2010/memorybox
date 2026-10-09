@@ -74,7 +74,7 @@ button:disabled{opacity:.4;cursor:default}
 const ITEMS=[["🧪","Test Tube"],["🩺","Stethoscope"],["🪴","Plant"],["⚽","Ball"],["🌍","Earth (Globe)"],["📷","Camera"],["💻","Laptop"],["📱","Old Cellphone"],["🔬","Microscope"],["🧲","Magnet"],["💡","Light Bulb"],["⚗️","Flask"],["🧬","DNA Model"],["🚀","Rocket"],["🌡️","Thermometer"]];
 const DECOYS=[["🔭","Telescope"],["🧫","Petri Dish"],["🔋","Battery"],["⏰","Alarm Clock"],["🧮","Abacus"],["🔑","Key"],["📚","Books"],["🎈","Balloon"],["⚙️","Gear"],["🧱","Brick"],["📡","Satellite Dish"],["🧭","Compass"],["🔦","Flashlight"],["🛰️","Satellite"],["🪐","Planet"]];
 const POOL=ITEMS.concat(DECOYS);let cur=ITEMS,rest=DECOYS;
-const STUDY=25;
+const STUDY=20;
 const $=id=>document.getElementById(id);
 const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 let rx=8,ry=0,zoom=1,fit=1,phase='study',end=0,timer=null,sel=new Set();
@@ -115,7 +115,7 @@ function idle(){
   ['bl','bs','bt'].forEach(i=>$(i).disabled=false);
   $('sub').textContent='The box is empty. Press Start Test to reveal the objects and start the timer!';
   document.querySelector('.timer small').textContent='Study Time';
-  $('tm').textContent='00:25';$('pb').style.width='100%';
+  $('tm').textContent='00:20';$('pb').style.width='100%';
   const p=shuf(POOL);cur=p.slice(0,15);rest=p.slice(15);
   els.forEach((e,i)=>{e.querySelector('span').textContent=cur[i][0];e.querySelector('em').textContent=cur[i][1]});
   layout();
